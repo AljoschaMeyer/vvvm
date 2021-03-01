@@ -10,6 +10,10 @@ All [valuable values](https://github.com/AljoschaMeyer/valuable-value) are vvvm 
 
 The rest of this document lists all the built-in (asynchronous) functions provided by the vvvm. They are grouped into categories which are also recommended name spaces for programming languages running on the vvvm.
 
+The given time complexities on functions are the worst one that a vvvm implementation may provide. An implementation is free to guarantee *better* complexity bounds than those required.
+
+When a function argument is described as having a certain type, but an argument of a different type supplied, the vm must abort execution. When an argument is referred to as a "positive int", but an int less than zero is supplied, the vm must abort execution as well.
+
 ## Built-In Functions
 
 ### `value`
@@ -22,7 +26,7 @@ Abnormally halts program execution without producing a value. The vvvm should pr
 
 ### `value::type_of(v)`
 
-Returns a string describing what kind of value the argument is: `"nil"`, `"bool"`, `"float"`, `"int"`, `"array"`, `"map"`, or `"function"`.
+Returns a string describing what kind of value the argument is: `"nil"`, `"bool"`, `"float"`, `"int"`, `"array"`, `"map"`, `"function"`, or `"async"`.
 
 ```pavo
 assert(value::type_of(nil), "nil");
@@ -32,6 +36,7 @@ assert(value::type_of(42), "int");
 assert(value::type_of([]), "array");
 assert(value::type_of({}), "map");
 assert(value::type_of(value::type_of), "function");
+assert(value::type_of(nb::preemptive_yield), "async");
 ```
 
 ### `value::truthy(v)`
@@ -58,7 +63,7 @@ assert(value::falsey(0), false);
 
 ### `value::total`
 
-This module bundles functions for interacting with the total order over all values. This order is a straightforward extension of the total order over all valuable values: functions are greater than maps, built-in functions are ordered in the order in which they appear in this document, closures are greater than built-in functions, and are ordered by ordinal.
+This module bundles functions for interacting with the total order over all values. This order is a straightforward extension of the total order over all valuable values: synchronous functions are greater than maps, synchronous built-in functions are ordered in the order in which they appear in this document, synchronous closures are greater than synchronous built-in functions, synchronous closures are ordered by ordinal, asynchronous functions are greater than synchronous functions, asynchronous built-in functions are ordered in the order in which they appear in this document, asynchronous closures are greater than asynchronous built-in functions, asynchronous closures are ordered by ordinal.
 
 See `value::total::compare` for examples illustrating how the order works.
 
@@ -99,13 +104,11 @@ assert(value::total::compare(-0, 0), "=");
 # ints are less than arrays
 assert(value::total::compare(99, []), "<");
 
-# arrays are ordered lexicographically
+# arrays are ordered by size first, lexicographically second
 assert(value::total::compare([], [1, 1]), "<");
-assert(value::total::compare([0, 9, 9], [1, 1]), "<");
 assert(value::total::compare([1], [1, 1]), "<");
 assert(value::total::compare([1, 0], [1, 1]), "<");
 assert(value::total::compare([1, 1], [1, 1, 0]), "<");
-assert(value::total::compare([1, 1], [2]), "<");
 assert(value::total::compare([1, 1], [2, 0]), "<");
 
 # arrays are less than maps
@@ -115,24 +118,18 @@ assert(value::total::compare([999], {}), "<");
 # two-element arrays, the outer array being sorted by keys:
 # for example `{1: "b", 0: "a"}` corresponds to `[[0, "a"], [1, "b"]]`
 assert(value::total::compare({}, {0: 90, 1: 80}), "<");
-assert(value::total::compare({0: 89, 1: 99, 2: 99}, {0: 90, 1: 80}), "<");
 assert(value::total::compare({0: 90, 1: 79}, {0: 90, 1: 80}), "<");
 assert(value::total::compare({0: 90, 1: 80}, {0: 90, 1: 80, 2: 0}), "<");
-assert(value::total::compare({0: 90, 1: 80}, {1: 79}), "<");
+assert(value::total::compare({1: 79}, {0: 90, 1: 80}), "<");
 
 # maps are less than functions
 assert(value::total::compare({}, value::type_of), "<");
 
-# built-in functions are ordered by their position in this document
+# built-in synchronous functions are ordered by their position in this document
 assert(value::total::compare(value::type_of, value::truthy), "<");
-assert(value::total::compare(value::truthy, value::truthy), "=");
 
-# built-in functions are less than closures
-assert(value::total::compare(value::type_of, (x) -> { return x;}), "<");
-
-# closures are ordered by their ordinal, which isn't necessarily deterministic
-# in deterministic mode, creation time determines the ordinal:
-assert(value::total::compare((x) -> { return x;}, (x) -> { return x;}), "<");
+# synchronous functions are less than asynchronous functions
+assert(value::total::compare(value::type_of, nb::preemptive_yield), "<");
 ```
 
 ### `value::total::lt(v, w)`
@@ -217,7 +214,7 @@ assert(value::total::max(1, 0), 1);
 
 ### `value::partial`
 
-This module bundles functions for interacting with the meaningful partial order over all values. This order is a straightforward extension of the meaningful partial order over all valuable values: functions are incomparable to other kinds of values, two functions are compared as of the total order over all values.
+This module bundles functions for interacting with the meaningful partial order over all values. This order is a straightforward extension of the meaningful partial order over all valuable values: synchronous functions are incomparable to other kinds of values, two synchronous functions are compared via the total order over all values, asynchronous functions are incomparable to other kinds of values, two asynchronous functions are compared via the total order over all values.
 
 See `value::partial::compare` for examples illustrating how the order works.
 
@@ -271,12 +268,8 @@ assert(value::partial::compare({0: 5}, {0: 4, 1: 0}), `{"err": nil}`);
 assert(value::partial::compare(value::type_of, value::truthy), {"ok": "<"});
 assert(value::partial::compare(value::truthy, value::truthy), {"ok": "="});
 
-# built-in functions are less than closures
-assert(value::partial::compare(value::type_of, (x) -> { return x;}), {"ok": "<"});
-
-# closures are ordered by their ordinal, which isn't necessarily deterministic
-# in deterministic mode, creation time determines the ordinal:
-assert(value::partial::compare((x) -> { return x;}, (x) -> { return x;}), {"ok": "<"});
+# asynchronous and synchronous functions are incomparable
+assert(value::partial::compare(value::truthy, nb::preemptive_yield), `{"err": nil}`);
 ```
 
 ### `value::partial::lt(v, w)`
@@ -363,8 +356,73 @@ assert(value::partial::least_upper_bound({0: 90}, {0: 89, 1: 80}), {"ok": {0: 90
 assert(value::partial::least_upper_bound(1, true), {"err": nil});
 ```
 
+### `bool`
 
+This module provides functions operating on bools.
 
+### `bool_not(b)`
+
+Computes the [logical negation](https://en.wikipedia.org/wiki/Negation) of the bool `b`.
+
+```pavo
+assert(bool_not(false), true);
+assert(bool_not(true), false);
+```
+
+### `bool_and(b, c)`
+
+Computes the [logical conjunction](https://en.wikipedia.org/wiki/Logical_conjunction) of the bools `b` and `c`.
+
+```pavo
+assert(bool_and(false, false), false);
+assert(bool_and(true, false), false);
+assert(bool_and(false, true), false);
+assert(bool_and(true, true), true);
+```
+
+### `bool_or(b, c)`
+
+Computes the [logical disjunction](https://en.wikipedia.org/wiki/Logical_disjunction) of the bools `b` and `c`.
+
+```pavo
+assert(bool_or(false, false), false);
+assert(bool_or(true, false), true);
+assert(bool_or(false, true), true);
+assert(bool_or(true, true), true);
+```
+
+### `bool_if(b, c)`
+
+Computes the [logical implication](https://en.wikipedia.org/wiki/https://en.wikipedia.org/wiki/Material_conditional) of the bools `b` and `c`.
+
+```pavo
+assert(bool_if(false, false), true);
+assert(bool_if(true, false), false);
+assert(bool_if(false, true), true);
+assert(bool_if(true, true), true);
+```
+
+### `bool_iff(b, c)`
+
+Computes the [logical biimplication](https://en.wikipedia.org/wiki/Logical_biconditional) of the bools `b` and `c`.
+
+```pavo
+assert(bool_iff(false, false), true);
+assert(bool_iff(true, false), false);
+assert(bool_iff(false, true), false);
+assert(bool_iff(true, true), true);
+```
+
+### `bool_xor(b, c)`
+
+Computes the [logical exclusive disjunction](https://en.wikipedia.org/wiki/Exclusive_or) of the bools `b` and `c`.
+
+```pavo
+assert(bool_xor(false, false), false);
+assert(bool_xor(true, false), true);
+assert(bool_xor(false, true), true);
+assert(bool_xor(true, true), false);
+```
 
 
 
@@ -376,7 +434,6 @@ assert(value::partial::least_upper_bound(1, true), {"err": nil});
 
 TODO
 
-- bool
 - float
 - int
 - array
