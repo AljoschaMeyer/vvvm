@@ -12,7 +12,7 @@ The rest of this document lists all the built-in (asynchronous) functions provid
 
 The given time complexities on functions are the worst one that a vvvm implementation may provide. An implementation is free to guarantee *better* complexity bounds than those required.
 
-When a function argument is described as having a certain type, but an argument of a different type supplied, the vm must abort execution. When an argument is referred to as a "positive int", but an int less than zero is supplied, the vm must abort execution as well.
+When a function argument is described as having a certain type, but an argument of a different type supplied, the vm must abort execution. When an argument is referred to as a "positive int", but an int less than zero is supplied, the vm must abort execution. When an argument is referred to as a "nonzero int", but `0` it is supplied, the vm must abort execution.
 
 ## Built-In Functions
 
@@ -428,431 +428,810 @@ assert(bool_xor(true, true), false);
 
 This module provides functions operating on floats. Unless specified otherwise, these functions work according to the IEEE 754 standard.
 
-### `float_add(x, y)`
+### `float::add(x, y)`
 
 Adds the float `x` to the float `y`.
 
 ```pavo
-assert(float_add(1.0, 2.0), 3.0);
-assert(float_add(1.0, -2.0), -1.0);
+assert(float::add(1.0, 2.0), 3.0);
+assert(float::add(1.0, -2.0), -1.0);
 ```
 
-### `float_sub(x, y)`
+### `float::sub(x, y)`
 
 Subtracts the float `y` from the float `x`.
 
 ```pavo
-assert(float_sub(1.0, 2.0), -1.0);
-assert(float_sub(1.0, -2.0), 3.0);
+assert(float::sub(1.0, 2.0), -1.0);
+assert(float::sub(1.0, -2.0), 3.0);
 ```
 
-### `float_mul(x, y)`
+### `float::mul(x, y)`
 
 Multiplies the float `x` with the float `y`.
 
 ```pavo
-assert(float_mul(2.0, 3.0), 6.0);
-assert(float_mul(2.0, -3.0), -6.0);
+assert(float::mul(2.0, 3.0), 6.0);
+assert(float::mul(2.0, -3.0), -6.0);
 ```
 
-### `float_div(x, y)`
+### `float::div(x, y)`
 
 Divides the float `x` by the float `y`.
 
 ```pavo
-assert(float_div(8.0, 3.0) 2.6666666666666665);
-assert(float_div(1.0, 0.0), Inf);
-assert(float_div(1.0, -0.0), -Inf);
-assert(float_div(0.0, 0.0) NaN);
+assert(float::div(8.0, 3.0) 2.6666666666666665);
+assert(float::div(1.0, 0.0), Inf);
+assert(float::div(1.0, -0.0), -Inf);
+assert(float::div(0.0, 0.0) NaN);
 ```
 
-### `float_mul_add(x, y, z)`
+### `float::mul_add(x, y, z)`
 
-Computes `x * y + z` on the floats `x`, `y` and `z` with perfect precision and then rounds the result to the nearest float. This is more accurate than (and thus not equivalent to) `float_add(float_mul(x, y), z)`. Also known as fused multiply-add.
+Computes `x * y + z` on the floats `x`, `y` and `z` with perfect precision and then rounds the result to the nearest float. This is more accurate than (and thus not equivalent to) `float::add(float::mul(x, y), z)`. Also known as fused multiply-add.
 
 ```pavo
-assert(float_mul_add(1.2, 3.4, 5.6), 9.68);
+assert(float::mul_add(1.2, 3.4, 5.6), 9.68);
 ```
 
-### `float_neg(x)`
+### `float::neg(x)`
 
 Negates the float `x`.
 
 ```pavo
-assert(float_neg(1.2), -1.2);
-assert(float_neg(-1.2), 1.2);
-assert(float_neg(0.0), -0.0);
-assert(float_neg(Inf), -Inf);
-assert(float_neg(NaN), NaN);
+assert(float::neg(1.2), -1.2);
+assert(float::neg(-1.2), 1.2);
+assert(float::neg(0.0), -0.0);
+assert(float::neg(Inf), -Inf);
+assert(float::neg(NaN), NaN);
 ```
 
-### `float_floor(x)`
+### `float::floor(x)`
 
 Returns the largest integral float less than or equal to the float `x`.
 
 ```pavo
-assert(float_floor(1.9), 1.0);
-assert(float_floor(1.0), 1.0);
-assert(float_floor(-1.1), -2.0);
+assert(float::floor(1.9), 1.0);
+assert(float::floor(1.0), 1.0);
+assert(float::floor(-1.1), -2.0);
 ```
 
-### `float_ceil(x)`
+### `float::ceil(x)`
 
 Returns the smallest integral float greater than or equal to the float `x`.
 
 ```pavo
-assert(float_ceil(1.1), 2.0);
-assert(float_ceil(1.0), 1.0);
-assert(float_ceil(-1.9), -1.0);
+assert(float::ceil(1.1), 2.0);
+assert(float::ceil(1.0), 1.0);
+assert(float::ceil(-1.9), -1.0);
 ```
 
-### `float_round(x)`
+### `float::round(x)`
 
 Rounds the float `x` towards the nearest integral float, rounding towards the even one in case of a tie.
 
 ```pavo
-assert(float_round(1.0), 1.0);
-assert(float_round(1.49), 1.0);
-assert(float_round(1.51), 2.0);
-assert(float_round(1.5), 2.0);
-assert(float_round(2.5), 2.0);
+assert(float::round(1.0), 1.0);
+assert(float::round(1.49), 1.0);
+assert(float::round(1.51), 2.0);
+assert(float::round(1.5), 2.0);
+assert(float::round(2.5), 2.0);
 ```
 
-### `float_trunc(x)`
+### `float::trunc(x)`
 
 Returns the integer part of the float `x` as a float.
 
 ```pavo
-assert(float_trunc(1.0), 1.0);
-assert(float_trunc(1.49), 1.0);
-assert(float_trunc(1.51), 1.0);
-assert(float_trunc(-1.51), -1.0);
+assert(float::trunc(1.0), 1.0);
+assert(float::trunc(1.49), 1.0);
+assert(float::trunc(1.51), 1.0);
+assert(float::trunc(-1.51), -1.0);
 ```
 
-### `float_fract(x)`
+### `float::fract(x)`
 
 Returns the fractional part of the float `x` (negative for negative `x`).
 
 ```pavo
-assert(float_fract(1.0), 0.0);
-assert(float_fract(1.49), 0.49);
-assert(float_fract(1.51), 0.51);
-assert(float_fract(-1.51), -0.51);
+assert(float::fract(1.0), 0.0);
+assert(float::fract(1.49), 0.49);
+assert(float::fract(1.51), 0.51);
+assert(float::fract(-1.51), -0.51);
 ```
 
-### `float_abs(x)`
+### `float::abs(x)`
 
 Returns the absolute value of the float `x`.
 
 ```pavo
-assert(float_abs(1.2), 1.2);
-assert(float_abs(-1.2), 1.2);
-assert(float_abs(0.0), 0.0);
-assert(float_abs(-0.0), 0.0);
+assert(float::abs(1.2), 1.2);
+assert(float::abs(-1.2), 1.2);
+assert(float::abs(0.0), 0.0);
+assert(float::abs(-0.0), 0.0);
 ```
 
-### `float_signum(x)`
+### `float::signum(x)`
 
 Returns `1.0` if the float `x` is greater than zero, `0.0` if it is equal to zero, `-1.0` if it is less than zero. `NaN` returns `NaN` instead.
 
 ```pavo
-assert(float_signum(99.2), 1.0);
-assert(float_signum(-99.2), -1.0);
-assert(float_signum(0.0), 0.0);
-assert(float_signum(-0.0), 0.0);
-assert(float_signum(NaN), NaN);
+assert(float::signum(99.2), 1.0);
+assert(float::signum(-99.2), -1.0);
+assert(float::signum(0.0), 0.0);
+assert(float::signum(-0.0), 0.0);
+assert(float::signum(NaN), NaN);
 ```
 
-### `float_pow(x, y)`
+### `float::pow(x, y)`
 
 Raises the float `x` to the power of the float `y`.
 
 ```pavo
-assert(float_pow(1.2, 3.4), 1.858729691979481);
+assert(float::pow(1.2, 3.4), 1.858729691979481);
 ```
 
-### `float_sqrt(x)`
+### `float::sqrt(x)`
 
 Computes the square root of the float `x`.
 
 ```pavo
-assert(float_sqrt(1.2), 1.0954451150103321);
-(assert(float_sqrt(-1.0), NaN);
+assert(float::sqrt(1.2), 1.0954451150103321);
+(assert(float::sqrt(-1.0), NaN);
 ```
 
-### `float_exp(x)`
+### `float::exp(x)`
 
 Returns [e](https://en.wikipedia.org/wiki/E_(mathematical_constant)) to the power of the float `x`.
 
 ```pavo
-assert(float_exp(1.2), 3.3201169227365472);
+assert(float::exp(1.2), 3.3201169227365472);
 ```
 
-### `float_exp2(x)`
+### `float::exp2(x)`
 
 Returns 2.0 to the power of the float `x`.
 
 ```pavo
-assert(float_exp2(1.2), 2.2973967099940698);
+assert(float::exp2(1.2), 2.2973967099940698);
 ```
 
-### `float_ln(x)`
+### `float::ln(x)`
 
 Returns the [natural logarithm](https://en.wikipedia.org/wiki/Natural_logarithm) of the float `x`.
 
 ```pavo
-assert(float_ln(1.2), 0.1823215567939546);
+assert(float::ln(1.2), 0.1823215567939546);
 ```
 
-### `float_log2(x)`
+### `float::log2(x)`
 
 Returns the [binary logarithm](https://en.wikipedia.org/wiki/Binary_logarithm) of the float `x`.
 
 ```pavo
-assert(float_log2(1.2), 0.2630344058337938);
+assert(float::log2(1.2), 0.2630344058337938);
 ```
 
-### `float_log10(x)`
+### `float::log10(x)`
 
 Returns the base 10 logarithm of the float `x`.
 
 ```pavo
-assert(float_log10(1.2), 0.07918124604762482);
+assert(float::log10(1.2), 0.07918124604762482);
 ```
 
-### `float_hypot(x, y)`
+### `float::hypot(x, y)`
 
 Calculates the length of the hypotenuse of a right-angle triangular given legs of the float lengths `x` and `y`.
 
 ```pavo
-assert(float_hypot(1.2, 3.4), 3.605551275463989);
-assert(float_hypot(1.2, -3.4), 3.605551275463989);
-assert(float_hypot(-1.2, 3.4), 3.605551275463989);
-assert(float_hypot(-1.2, -3.4), 3.605551275463989);
+assert(float::hypot(1.2, 3.4), 3.605551275463989);
+assert(float::hypot(1.2, -3.4), 3.605551275463989);
+assert(float::hypot(-1.2, 3.4), 3.605551275463989);
+assert(float::hypot(-1.2, -3.4), 3.605551275463989);
 ```
 
-### `float_sin(x)`
+### `float::sin(x)`
 
 Computes the sine of the float `x` (in radians).
 
 ```pavo
-assert(float_sin(1.2), 0.9320390859672263);
+assert(float::sin(1.2), 0.9320390859672263);
 ```
 
-### `float_cos(x)`
+### `float::cos(x)`
 
 Computes the cosine of the float `x` (in radians).
 
 ```pavo
-assert(float_cos(1.2), 0.3623577544766736);
+assert(float::cos(1.2), 0.3623577544766736);
 ```
 
-### `float_tan(x)`
+### `float::tan(x)`
 
 Computes the tangent of the float `x` (in radians).
 
 ```pavo
-assert(float_tan(1.2), 2.5721516221263188);
+assert(float::tan(1.2), 2.5721516221263188);
 ```
 
-### `float_asin(x)`
+### `float::asin(x)`
 
 Computes the arcsine of the float `x`, in radians in the range `[-pi/2, pi/2]`. Returns `NaN` if `x` is outside the range `[-1, 1]`.
 
 ```pavo
-assert(float_asin(0.8), 0.9272952180016123);
-assert(float_asin(1.2), NaN);
+assert(float::asin(0.8), 0.9272952180016123);
+assert(float::asin(1.2), NaN);
 ```
 
-### `float_acos(x)`
+### `float::acos(x)`
 
 Computes the arccosine of the float `x`, in radians in the range `[-pi/2, pi/2]`. Returns `NaN` if `x` is outside the range `[-1, 1]`.
 
 ```pavo
-assert(float_acos(0.8), 0.6435011087932843);
-assert(float_acos(1.2), NaN);
+assert(float::acos(0.8), 0.6435011087932843);
+assert(float::acos(1.2), NaN);
 ```
 
-### `float_atan(x)`
+### `float::atan(x)`
 
 Computes the arctangent of the float `x`, in radians in the range `[-pi/2, pi/2]`.
 
 ```pavo
-assert(float_atan(1.2), 0.8760580505981934);
+assert(float::atan(1.2), 0.8760580505981934);
 ```
 
-### `float_atan2(x, y)`
+### `float::atan2(x, y)`
 
 Computes [atan2](https://en.wikipedia.org/wiki/Atan2) of the float `x` and the float `y`.
 
 ```pavo
-assert(float_atan2(1.2, 3.4), 0.3392926144540447);
+assert(float::atan2(1.2, 3.4), 0.3392926144540447);
 ```
 
-### `float_exp_m1(x)`
+### `float::exp_m1(x)`
 
 Returns [e](https://en.wikipedia.org/wiki/E_(mathematical_constant)) to the power of the float `x`, minus one, i.e. `(e^x) - 1`.
 
 ```pavo
-assert(float_exp_m1(1.2), 2.3201169227365472);
+assert(float::exp_m1(1.2), 2.3201169227365472);
 ```
 
-### `float_ln_1p(x)`
+### `float::ln_1p(x)`
 
 Returns the [natural logarithm](https://en.wikipedia.org/wiki/Natural_logarithm) of one plus the float `x`, i.e. `ln(1 + x)`
 
 ```pavo
-assert(float_ln_1p(1.2), 0.7884573603642702);
+assert(float::ln_1p(1.2), 0.7884573603642702);
 ```
 
-### `float_sinh(x)`
+### `float::sinh(x)`
 
 Computes the [hyperbolic sine](https://en.wikipedia.org/wiki/Hyperbolic_function) of the float `x`.
 
 ```pavo
-assert(float_sinh(1.2), 1.5094613554121725);
+assert(float::sinh(1.2), 1.5094613554121725);
 ```
 
-### `float_cosh(x)`
+### `float::cosh(x)`
 
 Computes the [hyperbolic cosine](https://en.wikipedia.org/wiki/Hyperbolic_function) of the float `x`.
 
 ```pavo
-assert(float_cosh(1.2), 1.8106555673243747);
+assert(float::cosh(1.2), 1.8106555673243747);
 ```
 
-### `float_tanh(x)`
+### `float::tanh(x)`
 
 Computes the [hyperbolic tangent](https://en.wikipedia.org/wiki/Hyperbolic_function) of the float `x`.
 
 ```pavo
-assert(float_tanh(1.2), 0.8336546070121552);
+assert(float::tanh(1.2), 0.8336546070121552);
 ```
 
-### `float_asinh(x)`
+### `float::asinh(x)`
 
 Computes the [inverse hyperbolic sine](https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions) of the float `x`.
 
 ```pavo
-assert(float_asinh(1.2), 1.015973134179692);
+assert(float::asinh(1.2), 1.015973134179692);
 ```
 
-### `float_acosh(x)`
+### `float::acosh(x)`
 
 Computes the [inverse hyperbolic cosine](https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions) of the float `x`.
 
 ```pavo
-assert(float_acosh(1.2), 0.6223625037147785);
+assert(float::acosh(1.2), 0.6223625037147785);
 ```
 
-### `float_atanh(x)`
+### `float::atanh(x)`
 
 Computes the [inverse hyperbolic tangent](https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions) of the float `x`.
 
 ```pavo
-assert(float_atanh(0.8), 1.0986122886681098);
-assert(float_atanh(1.2), NaN);
+assert(float::atanh(0.8), 1.0986122886681098);
+assert(float::atanh(1.2), NaN);
 ```
 
-### `float_is_normal(x)`
+### `float::is_normal(x)`
 
 Returns `true` if the float `x` is neither zero, an infinity, `NaN` or [subnormal](https://en.wikipedia.org/wiki/Denormal_number), false otherwise.
 
 ```pavo
-assert(float_is_normal(1.0), true);
-assert(float_is_normal(1.0e-308), false); # subnormal
-assert(float_is_normal(0.0), false);
-assert(float_is_normal(Inf), false);
-assert(float_is_normal(-Inf), false);
-assert(float_is_normal(NaN), false);
+assert(float::is_normal(1.0), true);
+assert(float::is_normal(1.0e-308), false); # subnormal
+assert(float::is_normal(0.0), false);
+assert(float::is_normal(Inf), false);
+assert(float::is_normal(-Inf), false);
+assert(float::is_normal(NaN), false);
 ```
 
-### `float_is_integral(x)`
-
-Returns `true` if the float `x` is a mathematical integer, false otherwise.
-
-```pavo
-assert(float_is_integral(1.0), true);
-assert(float_is_integral(0.0), true);
-assert(float_is_integral(-42.0), true);
-assert(float_is_integral(1.1), false);
-assert(float_is_integral(Inf), false);
-assert(float_is_integral(-Inf), false);
-assert(float_is_integral(NaN), false);
-```
-
-### `float_to_degrees(x)`
+### `float::to_degrees(x)`
 
 Converts the float `x` from radians to degrees.
 
 ```pavo
-assert(float_to_degrees(1.2), 68.75493541569878);
+assert(float::to_degrees(1.2), 68.75493541569878);
 ```
 
-### `float_to_radians(x)`
+### `float::to_radians(x)`
 
 Converts the float `x` from degrees to radians.
 
 ```pavo
-assert(float_to_radians(1.2), 0.020943951023931952);
+assert(float::to_radians(1.2), 0.020943951023931952);
 ```
 
-### `float_to_int(x)`
+### `float::to_int(x)`
 
-Tries to converts the float `x` to an int `i` by checking whether `float_round(x)` is an integer between `-2^63` and `2^63 - 1`. Returns `{"ok": i}` if it is, `{"err": x}` otherwise.
+Tries to converts the float `x` to an int `i` by checking whether `float::round(x)` is an integer between `-2^63` and `2^63 - 1`. Returns `{"ok": i}` if it is, `{"err": x}` otherwise.
 
 ```pavo
-assert(float_to_int(1.0), {"ok": 1});
-assert(float_to_int(-1.0), {"ok": -1});
-assert(float_to_int(0.0), {"ok": 0});
-assert(float_to_int(-0.0), {"ok": 0});
-assert(float_to_int(1.9), {"ok": 1});
-assert(float_to_int(-1.9), {"ok": -1});
-assert(float_to_int(59907199254740993.9), {"ok": 59907199254740990});
-assert(float_to_int(Inf), {"err": Inf});
-assert(float_to_int(-Inf), {"err": -Inf});
-assert(float_to_int(NaN), {"err": NaN});
+assert(float::to_int(1.0), {"ok": 1});
+assert(float::to_int(-1.0), {"ok": -1});
+assert(float::to_int(0.0), {"ok": 0});
+assert(float::to_int(-0.0), {"ok": 0});
+assert(float::to_int(1.9), {"ok": 1});
+assert(float::to_int(-1.9), {"ok": -1});
+assert(float::to_int(59907199254740993.9), {"ok": 59907199254740990});
+assert(float::to_int(Inf), {"err": Inf});
+assert(float::to_int(-Inf), {"err": -Inf});
+assert(float::to_int(NaN), {"err": NaN});
 ```
 
-### `float_from_int(n)`
+### `float::from_int(n)`
 
 Converts the int `n` to a float, using the usual rounding rules if it can not be represented exactly ([round to nearest, ties to even](https://en.wikipedia.org/wiki/Rounding#Round_half_to_even)).
 
 ```pavo
-assert(float_from_int(0) 0.0);
-assert(float_from_int(1) 1.0);
-assert(float_from_int(-1) -1.0);
-assert(float_from_int(9007199254740993) 9007199254740992.0);
-assert(float_from_int(-9007199254740993) -9007199254740992.0);
+assert(float::from_int(0) 0.0);
+assert(float::from_int(1) 1.0);
+assert(float::from_int(-1) -1.0);
+assert(float::from_int(9007199254740993) 9007199254740992.0);
+assert(float::from_int(-9007199254740993) -9007199254740992.0);
 ```
 
-### `float_to_bits(x)`
+### `float::to_bits(x)`
 
 Returns the int with the same bit pattern as the bit pattern of the float `x`. The sign bit of the float is the most significant bit of the resulting int, the least significant bit of the float's mantissa is the least significant bit of the resulting int.
 
 `NaN` counts as a bit pattern consisting only of 1s.
 
 ```pavo
-assert(float_to_bits(1.2), 4608083138725491507);
-assert(float_to_bits(-1.2), -4615288898129284301);
-assert(float_to_bits(0.0), 0);
-assert(float_to_bits(-0.0), -9223372036854775808);
-assert(float_to_bits(NaN), -1);
+assert(float::to_bits(1.2), 4608083138725491507);
+assert(float::to_bits(-1.2), -4615288898129284301);
+assert(float::to_bits(0.0), 0);
+assert(float::to_bits(-0.0), -9223372036854775808);
+assert(float::to_bits(NaN), -1);
 ```
 
-### `bits_to_float(n)`
+### `float::from_bits(n)`
 
 Returns the float with the same bit pattern as the bit pattern of the int `n`. The most significant bit of `n` is the sign bit of the float, the least significant bit of `n` is the least significant bit of the float's mantissa.
 
 All bit patterns representing an IEEE 754 not-a-number return `NaN`.
 
 ```pavo
-assert(bits_to_float(42), 2.08e-322);
-assert(bits_to_float(-1), NaN);
-assert(bits_to_float(9221120237041090560), NaN);
+assert(float::from_bits(42), 2.08e-322);
+assert(float::from_bits(-1), NaN);
+assert(float::from_bits(9221120237041090560), NaN);
 ```
 
+### `int`
 
+This module provides functions operating on ints.
+
+### `int::count_ones(n)`
+
+Returns the number of ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::count_ones(126), 6);
+```
+
+### `int::count_zeros(n)`
+
+Returns the number of zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::count_zeros(126), 58);
+```
+
+### `int::leading_ones(n)`
+
+Returns the number of leading ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::leading_ones(-4611686018427387904), 2);
+```
+
+### `int::leading_zeros(n)`
+
+Returns the number of leading zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::leading_zeros(13), 60);
+```
+
+### `int::trailing_ones(n)`
+
+Returns the number of trailing ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::trailing_ones(3), 2);
+```
+
+### `int::trailing_zeros(n)`
+
+Returns the number of trailing zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::trailing_zeros(4), 2);
+```
+
+### `int::rotate_left(n, by)`
+
+Shifts the bits of the int `n` to the left by the amount `by`, wrapping the truncated bits to the end of the resulting int.
+
+```pavo
+assert(int::rotate_left(0xaa00000000006e1, 12), 0x6e10aa);
+```
+
+### `int::rotate_right(n, by)`
+
+Shifts the bits of the int `n` to the right by the positive int `by`, wrapping the truncated bits to the beginning of the resulting int.
+
+```pavo
+assert(int::rotate_right(0x6e10aa, 12), 0xaa00000000006e1);
+```
+
+### `int::reverse_bytes(n)`
+
+Reverses the [byte order](https://en.wikipedia.org/wiki/Endianness) of the int `n`.
+
+```pavo
+assert(int::reverse_bytes(0x1234567890123456), 0x5634129078563412);
+```
+
+### `int::reverse_bits(n)`
+
+Reverses the binary representation of the int `n`.
+
+```pavo
+assert(int::reverse_bits(0x1234567890123456), 0x6a2c48091e6a2c48);
+```
+
+### `int::add(n, m)`
+
+Adds the int `n` to the int `m`. Returns `{"ok": sum}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::add(1, 2), {"ok": 3});
+assert(int::add(1, -2), {"ok": -1});
+assert(int::add(9223372036854775807, 1), {"err": nil});
+```
+
+### `int::sub(n, m)`
+
+Subtracts the int `m` from the int `n`. Returns `{"ok": difference}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::sub(1, 2), {"ok": -1});
+assert(int::sub(1, -2), {"ok": 3});
+assert(int::sub(-9223372036854775808, 1), {"ok": 3});
+```
+
+### `int::mul(n, m)`
+
+Multiplies the int `n` with the int `m`. Returns `{"ok": product}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::mul(2, 3), {"ok": 6});
+assert(int::mul(2, -3), {"ok": -6});
+assert(int::mul(2, 9223372036854775807), {"err": nil});
+```
+
+### `int::div(n, m)`
+
+Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the quotient of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::div(8, 3), {"ok": 2});
+assert(int::div(-8, 3), {"ok": -3});
+assert(int::div(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::div_trunc(n, m)`
+
+Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the quotient of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::div_trunc(8, 3), {"ok": 2});
+assert(int::div_trunc(-8, 3), {"ok": -2});
+assert(int::div_trunc(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::mod(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. Returns`{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the remainder of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::mod(8, 3), {"ok": 2});
+assert(int::mod(-8, 3), {"ok": 1});
+assert(int::mod(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::mod_trunc(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. Returns `{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the remainder of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::mod_trunc(8, 3), {"ok": 2});
+assert(int::mod_trunc(-8, 3), {"ok": -2});
+assert(int::mod_trunc(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::neg(n)`
+
+Negates the int `n`. Returns `{"ok": negated}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::neg(42), {"ok": -42});
+assert(int::neg(-42), {"ok": 42});
+assert(int::neg(0), {"ok": 0});
+assert(int::neg(-9223372036854775808), {"err": nil});
+```
+
+### `int::shl(n, m)`
+
+Performs a [logical left shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the positive int `m` many bits. This always results in `0` if `m` is greater than `63`.
+
+```pavo
+assert(int::shl(5, 1), 10);
+assert(int::shl(42, 64), 0);
+```
+
+### `int::shr(n, m)`
+
+Performs a [logical right shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the int `m` many bits. This always results in `0` if `m` is greater than `63`.
+
+```pavo
+assert(int::shr(5, 1), 2);
+assert(int::shr(42, 64), 0);
+```
+
+### `int::abs(n)`
+
+Computes the absolute value of the int `n`. Returns `{"ok": absolute}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::abs(42), {"ok": 42});
+assert(int::abs(-42), {"ok": 42});
+assert(int::abs(0), {"ok": 42});
+assert(int::abs(-9223372036854775808), {"err": nil});
+```
+
+### `int::pow(n, m)`
+
+Computes the int `n` to the power of the positive int `m`. Returns `{"ok": power}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::pow(2, 3) {"ok": 8});
+assert(int::pow(2, 0), {"ok": 1});
+assert(int::pow(0, 999), {"ok": 0});
+assert(int::pow(1, 999), {"ok": 1});
+assert(int::pow(-1, 999), {"ok": -1});
+assert(int::pow(99, 99), {"err": nil});
+```
+
+### `int::signum(n)`
+
+Returns `-1` if the int `n` is less than `0`, `0` if `n` is equal to `0`, `1` if `n` is greater than `0`.
+
+```pavo
+assert(int::signum(-42), -1);
+assert(int::signum(0), 0);
+assert(int::signum(42), 1);
+```
+
+### `int::sat`
+
+Computation on int that saturateat the numeric balance instead of overflowing.
+
+### `int::sat::add(n, m)`
+
+Adds the int `n` to the int `m`, saturating at the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::sat::add(1, 2), 3);
+assert(int::sat::add(1, -2), -1);
+assert(int::sat::add(9223372036854775807, 1), 9223372036854775807);
+assert(int::sat::add(-9223372036854775808, -1), -9223372036854775808);
+```
+
+### `int::sat::sub(n, m)`
+
+Subtracts the int `n` from the int `m`, saturating at the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::sat::sub(1, 2), -1);
+assert(int::sat::sub(1, -2), 3);
+assert(int::sat::sub(-9223372036854775808, 1), -9223372036854775808);
+assert(int::sat::sub(9223372036854775807, -1), 9223372036854775807);
+```
+
+### `int::sat::mul(n, m)`
+
+Multiplies the int `n` with the int `m`, saturating at the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::sat::mul(2, 3), 6);
+assert(int::sat::mul(2, -3), -6);
+assert(int::sat::mul(9223372036854775807, 2), 9223372036854775807);
+assert(int::sat::mul(-9223372036854775808, 2), -9223372036854775808);
+```
+
+### `int::sat::pow(n, m)`
+
+Computes the int `n` to the power of the positive int `m`, saturating at the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::sat::pow(2, 3), 8);
+assert(int::sat::pow(2, 0), 1);
+assert(int::sat::pow(0, 999), 0);
+assert(int::sat::pow(1, 999), 1);
+assert(int::sat::pow(-1, 999), -1);
+assert(int::sat::pow(99, 99), 9223372036854775807);
+assert(int::sat::pow(-99, 99), -9223372036854775808);
+```
+
+### `int::wrap`
+
+Computations on ints that wrap around numeric bounds instead of overflowing.
+
+### `int::wrap::add(n, m)`
+
+Adds the int `n` to the int `m`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::add(1, 2), 3);
+assert(int::wrap::add(9223372036854775807, 1), -9223372036854775808);
+assert(int::wrap::add(-9223372036854775808, -1), 9223372036854775807);
+```
+
+### `int::wrap::sub(n, m)`
+
+Subtracts the int `n` from the int `m`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::sub(1, 2), -1);
+assert(int::wrap::sub(-9223372036854775808, 1), 9223372036854775807);
+assert(int::wrap::sub(9223372036854775807, -1), -9223372036854775808);
+```
+
+### `int::wrap::mul(n, m)`
+
+Muliplies the int `n` with the int `m`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::mul(2, 3), 6);
+assert(int::wrap::mul(9223372036854775807, 2), -2);
+assert(int::wrap::mul(9223372036854775807, -2), 2);
+assert(int::wrap::mul(-9223372036854775808, 2), 0);
+assert(int::wrap::mul(-9223372036854775808, -2), 0);
+```
+
+### `int::wrap::div(n, m)`
+
+Divides the nonzero int `n` by the int `m`, wrapping around the numeric bounds instead of overflowing.
+
+This computes the quotient of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::wrap::div(8, 3), 2);
+assert(int::wrap::div(-8, 3), -3);
+assert(int::wrap::div(-9223372036854775808, -1), -9223372036854775808);
+```
+
+### `int::wrap::div_trunc(n, m)`
+
+Divides the nonzero int `n` by the int `m`, wrapping around the numeric bounds instead of overflowing.
+
+This computes the quotient of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::wrap::div_trunc(8, 3), 2);
+assert(int::wrap::div_trunc(-8, 3), -2);
+assert(int::wrap::div_trunc(-9223372036854775808, -1), -9223372036854775808);
+```
+
+### `int::wrap::mod(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`, wrapping around the numeric bounds instead of overflowing.
+
+This computes the remainder of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::wrap::mod(8, 3), 2);
+assert(int::wrap::mod(-8, 3), 1);
+assert(int::wrap::mod(-9223372036854775808, -1), 0);
+```
+
+### `int::wrap::mod_trunc(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`, wrapping around the numeric bounds instead of overflowing.
+
+This computes the remainder of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::wrap::mod_trunc(8, 3), 2);
+assert(int::wrap::mod_trunc(-8, 3), -2);
+assert(int::wrap::mod_trunc(-9223372036854775808, -1), 0);
+```
+
+### `int::wrap::neg(n)`
+
+Negates the int `n`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::neg(42), -42);
+assert(int::wrap::neg(-42) 42);
+assert(int::wrap::neg(0), 0);
+assert(int::wrap::neg(-9223372036854775808), -9223372036854775808);
+```
+
+### `int::wrap::abs(n)`
+
+Returns the absolute value of the int `n`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::abs(42), 42);
+assert(int::wrap::abs(-42), 42);
+assert(int::wrap::abs(0), 0);
+assert(int::wrap::abs(-9223372036854775808), -9223372036854775808);
+```
+
+### `int::wrap::pow(n, m)`
+
+Computes the int `n` to the power of the positive int `m`, wrapping around the numeric bounds instead of overflowing.
+
+```pavo
+assert(int::wrap::pow(2, 3), 8);
+assert(int::wrap::pow(2, 0), 1);
+assert(int::wrap::pow(0, 999), 0);
+assert(int::wrap::pow(1, 999), 1);
+assert(int::wrap::pow(-1, 999), -1);
+assert(int::wrap::pow(99, 99), -7394533151961528133);
+```
 
 
 
@@ -862,8 +1241,6 @@ assert(bits_to_float(9221120237041090560), NaN);
 
 TODO
 
-- float
-- int
 - array
 - map
 - function
