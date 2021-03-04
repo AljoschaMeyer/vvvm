@@ -842,217 +842,6 @@ assert(float::from_bits(9221120237041090560), NaN);
 
 This module provides functions operating on ints.
 
-### `int::count_ones(n)`
-
-Returns the number of ones in the binary representation of the int `n`.
-
-```pavo
-assert(int::count_ones(126), 6);
-```
-
-### `int::count_zeros(n)`
-
-Returns the number of zeros in the binary representation of the int `n`.
-
-```pavo
-assert(int::count_zeros(126), 58);
-```
-
-### `int::leading_ones(n)`
-
-Returns the number of leading ones in the binary representation of the int `n`.
-
-```pavo
-assert(int::leading_ones(-4611686018427387904), 2);
-```
-
-### `int::leading_zeros(n)`
-
-Returns the number of leading zeros in the binary representation of the int `n`.
-
-```pavo
-assert(int::leading_zeros(13), 60);
-```
-
-### `int::trailing_ones(n)`
-
-Returns the number of trailing ones in the binary representation of the int `n`.
-
-```pavo
-assert(int::trailing_ones(3), 2);
-```
-
-### `int::trailing_zeros(n)`
-
-Returns the number of trailing zeros in the binary representation of the int `n`.
-
-```pavo
-assert(int::trailing_zeros(4), 2);
-```
-
-### `int::rotate_left(n, by)`
-
-Shifts the bits of the int `n` to the left by the amount `by`, wrapping the truncated bits to the end of the resulting int.
-
-```pavo
-assert(int::rotate_left(0xaa00000000006e1, 12), 0x6e10aa);
-```
-
-### `int::rotate_right(n, by)`
-
-Shifts the bits of the int `n` to the right by the positive int `by`, wrapping the truncated bits to the beginning of the resulting int.
-
-```pavo
-assert(int::rotate_right(0x6e10aa, 12), 0xaa00000000006e1);
-```
-
-### `int::reverse_bytes(n)`
-
-Reverses the [byte order](https://en.wikipedia.org/wiki/Endianness) of the int `n`.
-
-```pavo
-assert(int::reverse_bytes(0x1234567890123456), 0x5634129078563412);
-```
-
-### `int::reverse_bits(n)`
-
-Reverses the binary representation of the int `n`.
-
-```pavo
-assert(int::reverse_bits(0x1234567890123456), 0x6a2c48091e6a2c48);
-```
-
-### `int::add(n, m)`
-
-Adds the int `n` to the int `m`. Returns `{"ok": sum}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::add(1, 2), {"ok": 3});
-assert(int::add(1, -2), {"ok": -1});
-assert(int::add(9223372036854775807, 1), {"err": nil});
-```
-
-### `int::sub(n, m)`
-
-Subtracts the int `m` from the int `n`. Returns `{"ok": difference}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::sub(1, 2), {"ok": -1});
-assert(int::sub(1, -2), {"ok": 3});
-assert(int::sub(-9223372036854775808, 1), {"ok": 3});
-```
-
-### `int::mul(n, m)`
-
-Multiplies the int `n` with the int `m`. Returns `{"ok": product}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::mul(2, 3), {"ok": 6});
-assert(int::mul(2, -3), {"ok": -6});
-assert(int::mul(2, 9223372036854775807), {"err": nil});
-```
-
-### `int::div(n, m)`
-
-Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
-
-This computes the quotient of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
-
-```pavo
-assert(int::div(8, 3), {"ok": 2});
-assert(int::div(-8, 3), {"ok": -3});
-assert(int::div(-9223372036854775808, -1), {"err": "overflow"});
-```
-
-### `int::div_trunc(n, m)`
-
-Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
-
-This computes the quotient of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
-
-```pavo
-assert(int::div_trunc(8, 3), {"ok": 2});
-assert(int::div_trunc(-8, 3), {"ok": -2});
-assert(int::div_trunc(-9223372036854775808, -1), {"err": "overflow"});
-```
-
-### `int::mod(n, m)`
-
-Computes the int `n` modulo the nonzero int `m`. Returns`{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
-
-This computes the remainder of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
-
-```pavo
-assert(int::mod(8, 3), {"ok": 2});
-assert(int::mod(-8, 3), {"ok": 1});
-assert(int::mod(-9223372036854775808, -1), {"err": "overflow"});
-```
-
-### `int::mod_trunc(n, m)`
-
-Computes the int `n` modulo the nonzero int `m`. Returns `{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
-
-This computes the remainder of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
-
-```pavo
-assert(int::mod_trunc(8, 3), {"ok": 2});
-assert(int::mod_trunc(-8, 3), {"ok": -2});
-assert(int::mod_trunc(-9223372036854775808, -1), {"err": "overflow"});
-```
-
-### `int::neg(n)`
-
-Negates the int `n`. Returns `{"ok": negated}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::neg(42), {"ok": -42});
-assert(int::neg(-42), {"ok": 42});
-assert(int::neg(0), {"ok": 0});
-assert(int::neg(-9223372036854775808), {"err": nil});
-```
-
-### `int::shl(n, m)`
-
-Performs a [logical left shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the positive int `m` many bits. This always results in `0` if `m` is greater than `63`.
-
-```pavo
-assert(int::shl(5, 1), 10);
-assert(int::shl(42, 64), 0);
-```
-
-### `int::shr(n, m)`
-
-Performs a [logical right shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the int `m` many bits. This always results in `0` if `m` is greater than `63`.
-
-```pavo
-assert(int::shr(5, 1), 2);
-assert(int::shr(42, 64), 0);
-```
-
-### `int::abs(n)`
-
-Computes the absolute value of the int `n`. Returns `{"ok": absolute}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::abs(42), {"ok": 42});
-assert(int::abs(-42), {"ok": 42});
-assert(int::abs(0), {"ok": 42});
-assert(int::abs(-9223372036854775808), {"err": nil});
-```
-
-### `int::pow(n, m)`
-
-Computes the int `n` to the power of the positive int `m`. Returns `{"ok": power}` if no overflow occurred, `{"err": nil}` otherwise.
-
-```pavo
-assert(int::pow(2, 3) {"ok": 8});
-assert(int::pow(2, 0), {"ok": 1});
-assert(int::pow(0, 999), {"ok": 0});
-assert(int::pow(1, 999), {"ok": 1});
-assert(int::pow(-1, 999), {"ok": -1});
-assert(int::pow(99, 99), {"err": nil});
-```
-
 ### `int::signum(n)`
 
 Returns `-1` if the int `n` is less than `0`, `0` if `n` is equal to `0`, `1` if `n` is greater than `0`.
@@ -1063,9 +852,229 @@ assert(int::signum(0), 0);
 assert(int::signum(42), 1);
 ```
 
+### `int::add(n, m)`
+
+Adds the int `n` to the int `m`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::add(1, 2), 3);
+assert(int::add(1, -2), -1);
+```
+
+### `int::sub(n, m)`
+
+Subtracts the int `m` from the int `n`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::sub(1, 2), -1);
+assert(int::sub(1, -2), 3);
+```
+
+### `int::mul(n, m)`
+
+Multiplies the int `n` with the int `m`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::mul(2, 3), 6);
+assert(int::mul(2, -3), -6);
+```
+
+### `int::div(n, m)`
+
+Divides the int `n` by the nonzero int `m`. The vm aborts execution if an overflow occurs.
+
+This computes the quotient of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::div(8, 3), 2);
+assert(int::div(-8, 3), -3);
+```
+
+### `int::div_trunc(n, m)`
+
+Divides the int `n` by the nonzero int `m`. The vm aborts execution if an overflow occurs.
+
+This computes the quotient of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::div_trunc(8, 3), 2);
+assert(int::div_trunc(-8, 3), -2);
+```
+
+### `int::mod(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. The vm aborts execution if an overflow occurs.
+
+This computes the remainder of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::mod(8, 3), 2);
+assert(int::mod(-8, 3), 1);
+```
+
+### `int::mod_trunc(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. The vm aborts execution if an overflow occurs.
+
+This computes the remainder of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::mod_trunc(8, 3), 2);
+assert(int::mod_trunc(-8, 3), -2);
+```
+
+### `int::neg(n)`
+
+Negates the int `n`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::neg(42), -42);
+assert(int::neg(-42), 42);
+assert(int::neg(0), 0);
+```
+
+### `int::abs(n)`
+
+Computes the absolute value of the int `n`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::abs(42), 42);
+assert(int::abs(-42), 42);
+assert(int::abs(0), 0);
+```
+
+### `int::pow(n, m)`
+
+Computes the int `n` to the power of the positive int `m`. The vm aborts execution if an overflow occurs.
+
+```pavo
+assert(int::pow(2, 3) 8);
+assert(int::pow(2, 0), 1);
+assert(int::pow(0, 999), 0);
+assert(int::pow(1, 999), 1);
+assert(int::pow(-1, 999), -1);
+```
+
+### `int::check`
+
+Operation on int that check for overflows and return results accordingly.
+
+### `int::check::add(n, m)`
+
+Adds the int `n` to the int `m`. Returns `{"ok": sum}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::add(1, 2), {"ok": 3});
+assert(int::check::add(1, -2), {"ok": -1});
+assert(int::check::add(9223372036854775807, 1), {"err": nil});
+```
+
+### `int::check::sub(n, m)`
+
+Subtracts the int `m` from the int `n`. Returns `{"ok": difference}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::sub(1, 2), {"ok": -1});
+assert(int::check::sub(1, -2), {"ok": 3});
+assert(int::check::sub(-9223372036854775808, 1), {"ok": 3});
+```
+
+### `int::check::mul(n, m)`
+
+Multiplies the int `n` with the int `m`. Returns `{"ok": product}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::mul(2, 3), {"ok": 6});
+assert(int::check::mul(2, -3), {"ok": -6});
+assert(int::check::mul(2, 9223372036854775807), {"err": nil});
+```
+
+### `int::check::div(n, m)`
+
+Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the quotient of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::check::div(8, 3), {"ok": 2});
+assert(int::check::div(-8, 3), {"ok": -3});
+assert(int::check::div(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::check::div_trunc(n, m)`
+
+Divides the int `n` by the nonzero int `m`. Returns `{"ok": quotient}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the quotient of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::check::div_trunc(8, 3), {"ok": 2});
+assert(int::check::div_trunc(-8, 3), {"ok": -2});
+assert(int::check::div_trunc(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::check::mod(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. Returns`{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the remainder of [euclidean division](https://en.wikipedia.org/wiki/Euclidean_division).
+
+```pavo
+assert(int::check::mod(8, 3), {"ok": 2});
+assert(int::check::mod(-8, 3), {"ok": 1});
+assert(int::check::mod(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::check::mod_trunc(n, m)`
+
+Computes the int `n` modulo the nonzero int `m`. Returns `{"ok": modulus}` if no overflow occurred, `{"err": "overflow"}` otherwise.
+
+This computes the remainder of [truncating division](https://en.wikipedia.org/w/index.php?title=Truncated_division).
+
+```pavo
+assert(int::check::mod_trunc(8, 3), {"ok": 2});
+assert(int::check::mod_trunc(-8, 3), {"ok": -2});
+assert(int::check::mod_trunc(-9223372036854775808, -1), {"err": "overflow"});
+```
+
+### `int::check::neg(n)`
+
+Negates the int `n`. Returns `{"ok": negated}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::neg(42), {"ok": -42});
+assert(int::check::neg(-42), {"ok": 42});
+assert(int::check::neg(0), {"ok": 0});
+assert(int::check::neg(-9223372036854775808), {"err": nil});
+```
+
+### `int::check::abs(n)`
+
+Computes the absolute value of the int `n`. Returns `{"ok": absolute}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::abs(42), {"ok": 42});
+assert(int::check::abs(-42), {"ok": 42});
+assert(int::check::abs(0), {"ok": 0});
+assert(int::check::abs(-9223372036854775808), {"err": nil});
+```
+
+### `int::check::pow(n, m)`
+
+Computes the int `n` to the power of the positive int `m`. Returns `{"ok": power}` if no overflow occurred, `{"err": nil}` otherwise.
+
+```pavo
+assert(int::check::pow(2, 3) {"ok": 8});
+assert(int::check::pow(2, 0), {"ok": 1});
+assert(int::check::pow(0, 999), {"ok": 0});
+assert(int::check::pow(1, 999), {"ok": 1});
+assert(int::check::pow(-1, 999), {"ok": -1});
+assert(int::check::pow(99, 99), {"err": nil});
+```
+
 ### `int::sat`
 
-Computation on int that saturateat the numeric balance instead of overflowing.
+Computation on int that saturate at the numeric bounds instead of overflowing.
 
 ### `int::sat::add(n, m)`
 
@@ -1233,6 +1242,253 @@ assert(int::wrap::pow(-1, 999), -1);
 assert(int::wrap::pow(99, 99), -7394533151961528133);
 ```
 
+### `int::bit`
+
+This module contains functions working on the bit representation of ints.
+
+### `int::bit::count_ones(n)`
+
+Returns the number of ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::count_ones(126), 6);
+```
+
+### `int::bit::count_zeros(n)`
+
+Returns the number of zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::count_zeros(126), 58);
+```
+
+### `int::bit::leading_ones(n)`
+
+Returns the number of leading ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::leading_ones(-4611686018427387904), 2);
+```
+
+### `int::bit::leading_zeros(n)`
+
+Returns the number of leading zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::leading_zeros(13), 60);
+```
+
+### `int::bit::trailing_ones(n)`
+
+Returns the number of trailing ones in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::trailing_ones(3), 2);
+```
+
+### `int::bit::trailing_zeros(n)`
+
+Returns the number of trailing zeros in the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::trailing_zeros(4), 2);
+```
+
+### `int::bit::rotate_left(n, by)`
+
+Shifts the bits of the int `n` to the left by the positive int `by`, wrapping the truncated bits to the end of the resulting int.
+
+```pavo
+assert(int::bit::rotate_left(0xaa00000000006e1, 12), 0x6e10aa);
+```
+
+### `int::bit::rotate_right(n, by)`
+
+Shifts the bits of the int `n` to the right by the positive int `by`, wrapping the truncated bits to the beginning of the resulting int.
+
+```pavo
+assert(int::bit::rotate_right(0x6e10aa, 12), 0xaa00000000006e1);
+```
+
+### `int::bit::reverse_bytes(n)`
+
+Reverses the [byte order](https://en.wikipedia.org/wiki/Endianness) of the int `n`.
+
+```pavo
+assert(int::bit::reverse_bytes(0x1234567890123456), 0x5634129078563412);
+```
+
+### `int::bit::reverse_bits(n)`
+
+Reverses the binary representation of the int `n`.
+
+```pavo
+assert(int::bit::reverse_bits(0x1234567890123456), 0x6a2c48091e6a2c48);
+```
+
+### `int::bit::shl(n, m)`
+
+Performs a [logical left shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the positive int `m` many bits. This always results in `0` if `m` is greater than `63`.
+
+```pavo
+assert(int::bit::shl(5, 1), 10);
+assert(int::bit::shl(42, 64), 0);
+```
+
+### `int::bit::shr(n, m)`
+
+Performs a [logical right shift](https://en.wikipedia.org/wiki/Logical_shift) of the int `n` by the int `m` many bits. This always results in `0` if `m` is greater than `63`.
+
+```pavo
+assert(int::bit::shr(5, 1), 2);
+assert(int::bit::shr(42, 64), 0);
+```
+
+### `array`
+
+This module bundles functions operating on arrays.
+
+#### `(arr-count arr)`
+
+Returns the number of elements in the array `arr`.
+
+Time: O(1).
+
+```pavo
+(assert-eq (arr-count []) 0)
+(assert-eq (arr-count [nil]) 1)
+(assert-eq (arr-count [0, 1, 2]) 3)
+```
+
+#### `(arr-get arr index)`
+
+Returns the element at the int `index` in the array `arr`.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-get [true] 0) true)
+(assert-throw (arr-get [] 0) {:tag :err-lookup})
+```
+
+#### `(arr-insert arr index new)`
+
+Inserts the value `new` into the array `arr` at the index int `index`.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds.
+Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-insert [0 1] 0 42) [42 0 1])
+(assert-eq (arr-insert [0 1] 1 42) [0 42 1])
+(assert-eq (arr-insert [0 1] 2 42) [0 1 42])
+(assert-throw (arr-insert [0 1] 3 42) {:tag :err-lookup})
+```
+
+#### `(arr-remove arr index)`
+
+Returns the array obtained by removing the element at the index int `index` from the array `arr`.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-remove [0 1] 0) [1])
+(assert-eq (arr-remove [0 1] 1) [0])
+(assert-throw (arr-remove [0 1] 3) {:tag :err-lookup})
+```
+
+#### `(arr-update arr index new)`
+
+Returns the array obtained by replacing the element at the index int `index` in the array `arr` with the value `new`.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-update [0 1] 0 42) [42 1])
+(assert-eq (arr-update [0 1] 1 42) [0 42])
+(assert-throw (arr-update [0 1] 2 42) {:tag :err-lookup})
+```
+
+#### `(arr-split arr index)`
+
+Splits the array `arr` at the index int `index`, returning an array containing two arrays: The first from 0 (inclusive) to `index` (exclusive), the second from `index` (inclusive) to the end.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-split [0 1 2] 0) [[] [0 1 2]])
+(assert-eq (arr-split [0 1 2] 1) [[0] [1 2]])
+(assert-eq (arr-split [0 1 2] 2) [[0 1] [2]])
+(assert-eq (arr-split [0 1 2] 3) [[0 1 2] []])
+(assert-throw (arr-split [0 1 2] 4) {:tag :err-lookup})
+```
+
+#### `(arr-slice arr start end)`
+
+Returns an array containing a subsequence of the elements of the array `arr`, starting at the index int `start` (inclusive) and up to the index int `end` (exclusive).
+
+Throws `{:tag :err-lookup}` if `start` is greater than `end`.
+Throws `{:tag :err-lookup}` if `start` is out of bounds.
+Throws `{:tag :err-lookup}` if `end` is out of bounds.
+
+Time: O(log n), where n is `(arr-count arr)`.
+
+```pavo
+(assert-eq (arr-slice [true false] 1 1) [])
+(assert-eq (arr-slice [true false] 0 1) [true])
+(assert-eq (arr-slice [true false] 1 2) [false])
+(assert-eq (arr-slice [true false] 0 2) [true false])
+(assert-throw (arr-slice [] 0 1) {:tag :err-lookup})
+(assert-throw (arr-slice [] 2 3) {:tag :err-lookup})
+(assert-throw (arr-slice [0 1 2 3] 2 1) {:tag :err-lookup})
+```
+
+#### `(arr-splice old index new)`
+
+Inserts the elements of the array `new` into the array `old`, starting at the index int `index`.
+
+Throws `{:tag :err-lookup}` if the index is out of bounds (of the `old` array).
+Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
+
+Time: O(log (n + m)), where n is `(arr-count old)` and m is `(arr-count new)`.
+
+```pavo
+(assert-eq (arr-splice [0 1] 0 [10 11]) [10 11 0 1])
+(assert-eq (arr-splice [0 1] 1 [10 11]) [0 10 11 1])
+(assert-eq (arr-splice [0 1] 2 [10 11]) [0 1 10 11])
+(assert-throw (arr-splice [0 1] 3 [10 11]) {:tag :err-lookup})
+```
+
+#### `(arr-concat left right)`
+
+Returns an array that contains all elements of the array `left` followed by all elements of the array `right`.
+
+Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
+
+Time: O(log (n + m)), where n is `(arr-count left)` and m is `(arr-count right)`.
+
+```pavo
+(assert-eq (arr-concat [0 1] [2 3]) [0 1 2 3])
+(assert-eq (arr-concat [] [0 1]) [0 1])
+(assert-eq (arr-concat [0 1] []) [0 1])
+```
+
+
+
+
+
+
+
 
 
 
@@ -1241,7 +1497,6 @@ assert(int::wrap::pow(99, 99), -7394533151961528133);
 
 TODO
 
-- array
 - map
 - function
 - preemptive_yield
