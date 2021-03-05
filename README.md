@@ -14,6 +14,10 @@ The given time complexities on functions are the worst one that a vvvm implement
 
 When a function argument is described as having a certain type, but an argument of a different type supplied, the vm must abort execution. When an argument is referred to as a "positive int", but an int less than zero is supplied, the vm must abort execution. When an argument is referred to as a "nonzero int", but `0` it is supplied, the vm must abort execution.
 
+When a function argument is referred to as an "index", the vm must abort execution if it is not an int, strictly less than `0`, or greater or equal to the number of elements in the first collection argument of the function (array or map). Indices are effectively a numbering of the elements in a collection, starting at 0.
+
+When a function argument is referred to as a "position", the vm must abort execution if it is not an int, strictly less than `0`, or strictly greater than the number of elements in the first collection argument of the function (array or map). Positions effectively sit between the elements of a collection, with position 0 being in front of the first element, and the last position being behind the last element.
+
 ## Built-In Functions
 
 ### `value`
@@ -1348,142 +1352,212 @@ assert(int::bit::shr(42, 64), 0);
 
 This module bundles functions operating on arrays.
 
-#### `(arr-count arr)`
+#### `arr::count(arr)`
 
 Returns the number of elements in the array `arr`.
 
 Time: O(1).
 
 ```pavo
-(assert-eq (arr-count []) 0)
-(assert-eq (arr-count [nil]) 1)
-(assert-eq (arr-count [0, 1, 2]) 3)
+assert(arr::count([]), 0);
+assert(arr::count([nil]), 1);
+assert(arr::count([0, 1, 2]), 3);
 ```
 
-#### `(arr-get arr index)`
+#### `arr::get(arr, i)`
 
-Returns the element at the int `index` in the array `arr`.
+Returns the element at the index `i` in the array `arr`.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds.
-
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-get [true] 0) true)
-(assert-throw (arr-get [] 0) {:tag :err-lookup})
+assert(arr::get([true, false], 0), true);
+assert(arr::get([true, false], 1), false);
 ```
 
-#### `(arr-insert arr index new)`
+#### `arr::insert(arr, p, new)`
 
-Inserts the value `new` into the array `arr` at the index int `index`.
+Inserts the value `new` into the array `arr` at the position `p`.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds.
-Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
-
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-insert [0 1] 0 42) [42 0 1])
-(assert-eq (arr-insert [0 1] 1 42) [0 42 1])
-(assert-eq (arr-insert [0 1] 2 42) [0 1 42])
-(assert-throw (arr-insert [0 1] 3 42) {:tag :err-lookup})
+assert(arr::insert([0, 1], 0, 42), [42, 0, 1]);
+assert(arr::insert([0, 1], 1, 42), [0, 42, 1]);
+assert(arr::insert([0, 1], 2, 42), [0, 1, 42]);
 ```
 
-#### `(arr-remove arr index)`
+#### `arr::remove(arr, i)`
 
-Returns the array obtained by removing the element at the index int `index` from the array `arr`.
+Returns the array obtained by removing the element at the index `i` from the array `arr`.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds.
-
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-remove [0 1] 0) [1])
-(assert-eq (arr-remove [0 1] 1) [0])
-(assert-throw (arr-remove [0 1] 3) {:tag :err-lookup})
+assert(arr::remove([0, 1], 0), [1]);
+assert(arr::remove([0, 1], 1), [0]);
 ```
 
-#### `(arr-update arr index new)`
+#### `arr::update(arr, i, v)`
 
-Returns the array obtained by replacing the element at the index int `index` in the array `arr` with the value `new`.
+Returns the array obtained by replacing the element at the index `i` in the array `arr` with the value `v`.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds.
-
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-update [0 1] 0 42) [42 1])
-(assert-eq (arr-update [0 1] 1 42) [0 42])
-(assert-throw (arr-update [0 1] 2 42) {:tag :err-lookup})
+assert(arr::update([0, 1], 0, 42), [42, 1]);
+assert(arr::update([0, 1], 1, 42), [0, 42]);
 ```
 
-#### `(arr-split arr index)`
+#### `arr::split(arr, p)`
 
-Splits the array `arr` at the index int `index`, returning an array containing two arrays: The first from 0 (inclusive) to `index` (exclusive), the second from `index` (inclusive) to the end.
+Splits the array `arr` at the index `p`, returning an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds.
-
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-split [0 1 2] 0) [[] [0 1 2]])
-(assert-eq (arr-split [0 1 2] 1) [[0] [1 2]])
-(assert-eq (arr-split [0 1 2] 2) [[0 1] [2]])
-(assert-eq (arr-split [0 1 2] 3) [[0 1 2] []])
-(assert-throw (arr-split [0 1 2] 4) {:tag :err-lookup})
+assert(arr::split([0, 1, 2], 0), [[], [0, 1, 2]]);
+assert(arr::split([0, 1, 2], 1), [[0], [1, 2]]);
+assert(arr::split([0, 1, 2], 2), [[0 1], [2]]);
+assert(arr::split([0, 1, 2], 3), [[0 1 2], []]);
 ```
 
-#### `(arr-slice arr start end)`
+#### `arr::slice(arr, start, end)`
 
-Returns an array containing a subsequence of the elements of the array `arr`, starting at the index int `start` (inclusive) and up to the index int `end` (exclusive).
+Returns an array containing the subsequence of the elements of the array `arr` between position `start` and position `end`.
 
-Throws `{:tag :err-lookup}` if `start` is greater than `end`.
-Throws `{:tag :err-lookup}` if `start` is out of bounds.
-Throws `{:tag :err-lookup}` if `end` is out of bounds.
+The vm aborts if `start` is strictly greater than `end`.
 
-Time: O(log n), where n is `(arr-count arr)`.
+Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-(assert-eq (arr-slice [true false] 1 1) [])
-(assert-eq (arr-slice [true false] 0 1) [true])
-(assert-eq (arr-slice [true false] 1 2) [false])
-(assert-eq (arr-slice [true false] 0 2) [true false])
-(assert-throw (arr-slice [] 0 1) {:tag :err-lookup})
-(assert-throw (arr-slice [] 2 3) {:tag :err-lookup})
-(assert-throw (arr-slice [0 1 2 3] 2 1) {:tag :err-lookup})
+assert(arr::slice([true, false], 1, 1), []);
+assert(arr::slice([true, false], 0, 1), [true]);
+assert(arr::slice([true, false], 1, 2), [false]);
+assert(arr::slice([true, false], 0, 2), [true, false]);
 ```
 
-#### `(arr-splice old index new)`
+#### `arr::splice(old, p, new)`
 
-Inserts the elements of the array `new` into the array `old`, starting at the index int `index`.
+Inserts the elements of the array `new` into the array `old`, starting at the index position `p`.
 
-Throws `{:tag :err-lookup}` if the index is out of bounds (of the `old` array).
-Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
-
-Time: O(log (n + m)), where n is `(arr-count old)` and m is `(arr-count new)`.
+Time: O(log (n + m)), where n is `arr::count(old)` and m is `arr::count(new)`.
 
 ```pavo
-(assert-eq (arr-splice [0 1] 0 [10 11]) [10 11 0 1])
-(assert-eq (arr-splice [0 1] 1 [10 11]) [0 10 11 1])
-(assert-eq (arr-splice [0 1] 2 [10 11]) [0 1 10 11])
-(assert-throw (arr-splice [0 1] 3 [10 11]) {:tag :err-lookup})
+assert(arr::splice([0, 1], 0, [10, 11]), [10, 11, 0, 1]);
+assert(arr::splice([0, 1], 1, [10, 11]), [0, 10, 11, 1]);
+assert(arr::splice([0, 1], 2, [10, 11]), [0, 1, 10, 11]);
 ```
 
-#### `(arr-concat left right)`
+#### `(arr::concat left right)`
 
 Returns an array that contains all elements of the array `left` followed by all elements of the array `right`.
 
-Throws `{:tag :err-collection-full}` if the resulting array would contain 2^63 or more elements.
-
-Time: O(log (n + m)), where n is `(arr-count left)` and m is `(arr-count right)`.
+Time: O(log (n + m)), where n is `arr::count(left)` and m is `arr::count(right)`.
 
 ```pavo
-(assert-eq (arr-concat [0 1] [2 3]) [0 1 2 3])
-(assert-eq (arr-concat [] [0 1]) [0 1])
-(assert-eq (arr-concat [0 1] []) [0 1])
+assert(arr::concat([0, 1], [2, 3]), [0, 1, 2, 3]);
+assert(arr::concat([], [0, 1]), [0, 1]);
+assert(arr::concat([0, 1], []), [0, 1]);
 ```
 
+### `arr::check`
 
+Functions operating on arrays that check whether indices or positions are out of bounds, and return results accordingly.
+
+#### `arr::check::get(arr, i)`
+
+Returns the element at the positive int `i` in the array `arr`. Returns `{"ok": v}` if `v` is the value at index `i`, or `{"err": nil}` if `i` is not a valid index.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::get([true, false], 0), {"ok": true});
+assert(arr::check::get([true, false], 1), {"ok": false});
+assert(arr::check::get([true, false], 2), {"err": nil});
+```
+
+#### `arr::check::insert(arr, p, new)`
+
+Inserts the value `new` into the array `arr` at the position `p`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `p` is not a valid position.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::insert([0, 1], 0, 42), {"ok": [42, 0, 1]});
+assert(arr::check::insert([0, 1], 1, 42), {"ok": [0, 42, 1]});
+assert(arr::check::insert([0, 1], 2, 42), {"ok": [0, 1, 42]});
+assert(arr::check::insert([0, 1], 3, 42), {"err": nil});
+```
+
+#### `arr::check::remove(arr, i)`
+
+Returns the array obtained by removing the element at the index `i` from the array `arr`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `i` is not a valid index.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::remove([0, 1], 0), {"ok": [1]});
+assert(arr::check::remove([0, 1], 1), {"ok": [0]});
+assert(arr::check::remove([0, 1], 2), {"err": nil});
+```
+
+#### `arr::check::update(arr, i, v)`
+
+Returns the array obtained by replacing the element at the index `i` in the array `arr` with the value `v`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `i` is not a valid index.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::update([0, 1], 0, 42), {"ok": [42, 1]});
+assert(arr::check::update([0, 1], 1, 42), {"ok": [0, 42]});
+assert(arr::check::update([0, 1], 2, 42), {"err": nil});
+```
+
+#### `arr::check::split(arr, p)`
+
+Splits the array `arr` at the index `p`, returning `{"ok": new}`, where `new` is an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements. Returns `{"err": nil}` if `p` is not a valid position.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::split([0, 1, 2], 0), {"ok": [[], [0, 1, 2]]});
+assert(arr::check::split([0, 1, 2], 1), {"ok": [[0], [1, 2]]});
+assert(arr::check::split([0, 1, 2], 2), {"ok": [[0 1], [2]]});
+assert(arr::check::split([0, 1, 2], 3), {"ok": [[0 1 2], []]});
+assert(arr::check::split([0, 1, 2], 4), {"err": nil});
+```
+
+#### `arr::check::slice(arr, start, end)`
+
+Returns an array containing the subsequence of the elements of the array `arr` between position `start` and position `end`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `start` is not a valid position, `end` is not a valid position, or `start` is strictly greater than `end`.
+
+The vm aborts if `start` is strictly greater than `end`.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::slice([true, false], 1, 1), {"ok": []});
+assert(arr::check::slice([true, false], 0, 1), {"ok": [true]});
+assert(arr::check::slice([true, false], 1, 2), {"ok": [false]});
+assert(arr::check::slice([true, false], 0, 2), {"ok": [true, false]});
+assert(arr::check::slice([true, false], 3, 4), {"err": nil});
+assert(arr::check::slice([true, false], 0, 3), {"err": nil});
+assert(arr::check::slice([true, false], 2, 1), {"err": nil});
+```
+
+#### `arr::check::splice(old, p, new)`
+
+Inserts the elements of the array `new` into the array `old`, starting at the index position `p`. Returns `{"ok": arr}` if `arr` is the resulting array, or `{"err": nil}` if `p` is not a valid position.
+
+Time: O(log (n + m)), where n is `arr::count(old)` and m is `arr::count(new)`.
+
+```pavo
+assert(arr::check::splice([0, 1], 0, [10, 11]), {"ok": [10, 11, 0, 1]});
+assert(arr::check::splice([0, 1], 1, [10, 11]), {"ok": [0, 10, 11, 1]});
+assert(arr::check::splice([0, 1], 2, [10, 11]), {"ok": [0, 1, 10, 11]});
+assert(arr::check::splice([0, 1], 3, [10, 11]), {"err": nil});
+```
 
 
 
