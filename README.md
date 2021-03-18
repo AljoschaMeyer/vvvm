@@ -18,6 +18,10 @@ When a function argument is referred to as an "index", the vm must abort executi
 
 When a function argument is referred to as a "position", the vm must abort execution if it is not an int, strictly less than `0`, or strictly greater than the number of elements in the first collection argument of the function (array or map). Positions effectively sit between the elements of a collection, with position 0 being in front of the first element, and the last position being behind the last element.
 
+When a function is said to return an "object", it returns a closure taking two arguments. The first argument indicates which method of the so-called object to invoke, the second argument is an array containing the arguments to that method. The documentation then lists the available methods and which arguments they take. Specifying an invalid method or not passing the correct number of arguments in the array aborts execution.
+
+When something is said to be a string, this refers to an array containing the bytes of a utf-8 string as ints.
+
 ## Built-In Functions
 
 ### `value`
@@ -108,12 +112,12 @@ assert(order::total::compare(-0, 0), "=");
 # ints are less than arrays
 assert(order::total::compare(99, []), "<");
 
-# arrays are ordered by size first, lexicographically second
+# arrays are ordered lexicographically
 assert(order::total::compare([], [1, 1]), "<");
 assert(order::total::compare([1], [1, 1]), "<");
 assert(order::total::compare([1, 0], [1, 1]), "<");
 assert(order::total::compare([1, 1], [1, 1, 0]), "<");
-assert(order::total::compare([1, 1], [2, 0]), "<");
+assert(order::total::compare([1, 1], [2]), "<");
 
 # arrays are less than maps
 assert(order::total::compare([999], {}), "<");
@@ -124,7 +128,7 @@ assert(order::total::compare([999], {}), "<");
 assert(order::total::compare({}, {0: 90, 1: 80}), "<");
 assert(order::total::compare({0: 90, 1: 79}, {0: 90, 1: 80}), "<");
 assert(order::total::compare({0: 90, 1: 80}, {0: 90, 1: 80, 2: 0}), "<");
-assert(order::total::compare({1: 79}, {0: 90, 1: 80}), "<");
+assert(order::total::compare({0: 90, 1: 80}, {1: 79}), "<");
 
 # maps are less than functions
 assert(order::total::compare({}, value::type_of), "<");
@@ -250,18 +254,21 @@ assert(order::partial::compare(Inf, NaN), {"ok": "<"});
 assert(order::partial::compare(-2, 1), {"ok": "<"});
 assert(order::partial::compare(-0, 0), {"ok": "="});
 
-# arrays are ordered component-wise
+# arrays are ordered component-wise, with the smaller array conceptually being
+# right-padded with values that are less than any real value
 assert(order::partial::compare([], [1, 1]), {"ok": "<"});
 assert(order::partial::compare([1, 0], [1, 1]), {"ok": "<"});
 assert(order::partial::compare([0, 1], [1, 1]), {"ok": "<"});
+assert(order::partial::compare([0, 1, 0], [1, 1]), `{"ok": "<"}`);
 assert(order::partial::compare([0, 2], [1, 1]), {"err": nil});
 assert(order::partial::compare([2, 0], [1, 1]), {"err": nil});
-assert(order::partial::compare([0, 1, 0], [1, 1]), `{"err": nil}`);
+assert(order::partial::compare([2], [1, 1]), {"err": nil});
 assert(order::partial::compare([2, 1], [1, 1]), {"ok": ">"});
 assert(order::partial::compare([1, 2], [1, 1]), {"ok": ">"});
 assert(order::partial::compare([1, 1, 0], [1, 1]), {"ok": ">"});
 
-# maps are ordered entry-wise
+# maps are ordered entry-wise, if one map has a key the other map does not, the
+# is considered to map that key to a value less than any real value
 assert(order::partial::compare({}, {0: 90, 1: 80}), {"ok": "<"});
 assert(order::partial::compare({0: 90, 1: 79}, {0: 90, 1: 80}), "<");
 assert(order::partial::compare({0: 90, 1: 80}, {0: 90, 1: 80, 2: 0}), "<");
@@ -1352,7 +1359,7 @@ assert(int::bit::shr(42, 64), 0);
 
 This module bundles functions operating on arrays.
 
-#### `arr::count(arr)`
+### `arr::count(arr)`
 
 Returns the number of elements in the array `arr`.
 
@@ -1364,7 +1371,7 @@ assert(arr::count([nil]), 1);
 assert(arr::count([0, 1, 2]), 3);
 ```
 
-#### `arr::get(arr, i)`
+### `arr::get(arr, i)`
 
 Returns the element at the index `i` in the array `arr`.
 
@@ -1375,7 +1382,7 @@ assert(arr::get([true, false], 0), true);
 assert(arr::get([true, false], 1), false);
 ```
 
-#### `arr::insert(arr, p, new)`
+### `arr::insert(arr, p, new)`
 
 Inserts the value `new` into the array `arr` at the position `p`.
 
@@ -1387,7 +1394,7 @@ assert(arr::insert([0, 1], 1, 42), [0, 42, 1]);
 assert(arr::insert([0, 1], 2, 42), [0, 1, 42]);
 ```
 
-#### `arr::remove(arr, i)`
+### `arr::remove(arr, i)`
 
 Returns the array obtained by removing the element at the index `i` from the array `arr`.
 
@@ -1398,20 +1405,20 @@ assert(arr::remove([0, 1], 0), [1]);
 assert(arr::remove([0, 1], 1), [0]);
 ```
 
-#### `arr::update(arr, i, v)`
+### `arr::set(arr, i, v)`
 
 Returns the array obtained by replacing the element at the index `i` in the array `arr` with the value `v`.
 
 Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-assert(arr::update([0, 1], 0, 42), [42, 1]);
-assert(arr::update([0, 1], 1, 42), [0, 42]);
+assert(arr::set([0, 1], 0, 42), [42, 1]);
+assert(arr::set([0, 1], 1, 42), [0, 42]);
 ```
 
-#### `arr::split(arr, p)`
+### `arr::split(arr, p)`
 
-Splits the array `arr` at the index `p`, returning an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements.
+Splits the array `arr` at the position `p`, returning an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements.
 
 Time: O(log n), where n is `arr::count(arr)`.
 
@@ -1422,7 +1429,7 @@ assert(arr::split([0, 1, 2], 2), [[0 1], [2]]);
 assert(arr::split([0, 1, 2], 3), [[0 1 2], []]);
 ```
 
-#### `arr::slice(arr, start, end)`
+### `arr::slice(arr, start, end)`
 
 Returns an array containing the subsequence of the elements of the array `arr` between position `start` and position `end`.
 
@@ -1437,7 +1444,31 @@ assert(arr::slice([true, false], 1, 2), [false]);
 assert(arr::slice([true, false], 0, 2), [true, false]);
 ```
 
-#### `arr::splice(old, p, new)`
+### `arr::slice_to(arr, p)`
+
+Returns an array containing the subsequence of the elements of the array `arr` from the beginning to the position `p`.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::slice_to([true, false], 0), []);
+assert(arr::slice_to([true, false], 1), [true]);
+assert(arr::slice_to([true, false], 2), [true, false]);
+```
+
+### `arr::slice_from(arr, p)`
+
+Returns an array containing the subsequence of the elements of the array `arr` from the position `p` to the end.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::slice_from([true, false], 0), [true, false]);
+assert(arr::slice_from([true, false], 1), [true]);
+assert(arr::slice_from([true, false], 2), []);
+```
+
+### `arr::splice(old, p, new)`
 
 Inserts the elements of the array `new` into the array `old`, starting at the index position `p`.
 
@@ -1449,7 +1480,7 @@ assert(arr::splice([0, 1], 1, [10, 11]), [0, 10, 11, 1]);
 assert(arr::splice([0, 1], 2, [10, 11]), [0, 1, 10, 11]);
 ```
 
-#### `(arr::concat left right)`
+### `arr::concat(left, right)`
 
 Returns an array that contains all elements of the array `left` followed by all elements of the array `right`.
 
@@ -1461,11 +1492,72 @@ assert(arr::concat([], [0, 1]), [0, 1]);
 assert(arr::concat([0, 1], []), [0, 1]);
 ```
 
+### `arr::builder()`
+
+Returns a new array builder, which is an object that allows efficiently constructing arrays. The internal state consists of an ordered buffer, from which an array can be efficiently created.
+
+#### `arr_builder("push_start", [v])`
+
+Adds the value `v` to the start of the internal buffer of the builder.
+
+Time: amortized O(n), where n is the number of values that have already been pushed into this builder.
+
+#### `arr_builder("push_end", [v])`
+
+Adds the value `v` to the end of the internal buffer of the builder.
+
+Time: amortized O(n), where n is the number of values that have already been pushed into this builder.
+
+#### `arr_builder("build", [])`
+
+Returns an array containing the values that have been added to the internal buffer.
+
+```pavo
+let b = arr::builder();
+
+b("push_start", [0]);
+b("push_end", [1]);
+b("push_start", [2]);
+b("push_end", [3]);
+
+assert(b("build", []), [2, 0, 1, 3]);
+```
+
+### `arr::focus(arr, p)`
+
+Returns a new array focus, which is an object that allows efficiently accessing values inside an array that are close to each other. The internal state consists of the elements of the array `arr`, and a designated position within that array, initially `p`. The focus provides methods to efficiently access elements close to the current position, and for efficiently changing that position to another, nearby position.
+
+#### `arr_focus("refocus", [by])`
+
+Updates the internal position by adding the int `by` to it, saturating at the boundaries for valid positions, i.e. zero and the length of the focussed array. Returns by how much the position was changed (may be negative).
+
+Time: amortized O(by). Traversing the complete array in steps of size `by` must take at most O(c) time, where c is the number of items in the focused array.
+
+```pavo
+let f = arr::focus([0, 1, 2, 3, 4], 4); # [0 1 2 3 * 4]
+assert(f("refocus", [-1]), -1); # [0 1 2 3 * 4];
+assert(f("refocus", [-2]), -2); # [0 1 * 2 3 4];
+assert(f("refocus", [9]), 3); # [0 1 2 3 4 *];
+```
+
+#### `arr_focus("get_relative", [i])`
+
+Computes an index by adding the int `i` to the current position of the focus. If this is a valid index in the focussed array, returns `{"ok": v}`, where `v` is the value at that position. Otherwise, returns `{"err": nil}`.
+
+Time: amortized O(i). Traversing the complete array and calling this method on every position must take at most O(c * i) time, where c is the number of items in the focused array.
+
+```pavo
+let f = arr::focus([0, 1, 2, 3, 4], 4); # [0 1 2 3 * 4]
+assert(f("get_relative", [0]), {"ok": 4});
+assert(f("get_relative", [-1]), {"ok": 3});
+assert(f("get_relative", [-9]), {"err": nil});
+```
+
 ### `arr::check`
 
 Functions operating on arrays that check whether indices or positions are out of bounds, and return results accordingly.
 
-#### `arr::check::get(arr, i)`
+### `arr::check::get(arr, i)`
 
 Returns the element at the positive int `i` in the array `arr`. Returns `{"ok": v}` if `v` is the value at index `i`, or `{"err": nil}` if `i` is not a valid index.
 
@@ -1477,7 +1569,7 @@ assert(arr::check::get([true, false], 1), {"ok": false});
 assert(arr::check::get([true, false], 2), {"err": nil});
 ```
 
-#### `arr::check::insert(arr, p, new)`
+### `arr::check::insert(arr, p, new)`
 
 Inserts the value `new` into the array `arr` at the position `p`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `p` is not a valid position.
 
@@ -1490,7 +1582,7 @@ assert(arr::check::insert([0, 1], 2, 42), {"ok": [0, 1, 42]});
 assert(arr::check::insert([0, 1], 3, 42), {"err": nil});
 ```
 
-#### `arr::check::remove(arr, i)`
+### `arr::check::remove(arr, i)`
 
 Returns the array obtained by removing the element at the index `i` from the array `arr`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `i` is not a valid index.
 
@@ -1502,21 +1594,21 @@ assert(arr::check::remove([0, 1], 1), {"ok": [0]});
 assert(arr::check::remove([0, 1], 2), {"err": nil});
 ```
 
-#### `arr::check::update(arr, i, v)`
+### `arr::check::set(arr, i, v)`
 
 Returns the array obtained by replacing the element at the index `i` in the array `arr` with the value `v`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `i` is not a valid index.
 
 Time: O(log n), where n is `arr::count(arr)`.
 
 ```pavo
-assert(arr::check::update([0, 1], 0, 42), {"ok": [42, 1]});
-assert(arr::check::update([0, 1], 1, 42), {"ok": [0, 42]});
-assert(arr::check::update([0, 1], 2, 42), {"err": nil});
+assert(arr::check::set([0, 1], 0, 42), {"ok": [42, 1]});
+assert(arr::check::set([0, 1], 1, 42), {"ok": [0, 42]});
+assert(arr::check::set([0, 1], 2, 42), {"err": nil});
 ```
 
-#### `arr::check::split(arr, p)`
+### `arr::check::split(arr, p)`
 
-Splits the array `arr` at the index `p`, returning `{"ok": new}`, where `new` is an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements. Returns `{"err": nil}` if `p` is not a valid position.
+Splits the array `arr` at the position `p`, returning `{"ok": new}`, where `new` is an array containing two arrays: The first containing the subsequence of the elements between positions `0` to `p`, the second containing the subsequence consisting of the remaining elements. Returns `{"err": nil}` if `p` is not a valid position.
 
 Time: O(log n), where n is `arr::count(arr)`.
 
@@ -1528,11 +1620,9 @@ assert(arr::check::split([0, 1, 2], 3), {"ok": [[0 1 2], []]});
 assert(arr::check::split([0, 1, 2], 4), {"err": nil});
 ```
 
-#### `arr::check::slice(arr, start, end)`
+### `arr::check::slice(arr, start, end)`
 
 Returns an array containing the subsequence of the elements of the array `arr` between position `start` and position `end`. Returns `{"ok": new}` if `new` is the resulting array, or `{"err": nil}` if `start` is not a valid position, `end` is not a valid position, or `start` is strictly greater than `end`.
-
-The vm aborts if `start` is strictly greater than `end`.
 
 Time: O(log n), where n is `arr::count(arr)`.
 
@@ -1546,7 +1636,31 @@ assert(arr::check::slice([true, false], 0, 3), {"err": nil});
 assert(arr::check::slice([true, false], 2, 1), {"err": nil});
 ```
 
-#### `arr::check::splice(old, p, new)`
+### `arr::check::slice_to(arr, p)`
+
+Returns an array containing the subsequence of the elements of the array `arr` from the beginning to the position `p`.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::slice_to([true, false], 0), {"ok": []});
+assert(arr::check::slice_to([true, false], 1), {"ok": [true]});
+assert(arr::check::slice_to([true, false], 2), {"ok": [true, false]});
+```
+
+### `arr::check::slice_from(arr, p)`
+
+Returns an array containing the subsequence of the elements of the array `arr` from the position `p` to the end.
+
+Time: O(log n), where n is `arr::count(arr)`.
+
+```pavo
+assert(arr::check::slice_from([true, false], 0), {"ok": [true, false]});
+assert(arr::check::slice_from([true, false], 1), {"ok": [true]});
+assert(arr::check::slice_from([true, false], 2), {"ok": []});
+```
+
+### `arr::check::splice(old, p, new)`
 
 Inserts the elements of the array `new` into the array `old`, starting at the index position `p`. Returns `{"ok": arr}` if `arr` is the resulting array, or `{"err": nil}` if `p` is not a valid position.
 
